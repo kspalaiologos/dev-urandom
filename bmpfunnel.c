@@ -37,8 +37,8 @@ int main(int argc, char * argv[]) {
     u8 pixel[4];
     Fy(height,
         Fx(width,
-            fread(pixel, 1, bytes_per_pixel, stdin);
-            fwrite(pixel, 1, bytes_per_pixel, output))
-        Fi(padding, fputc(0, output))
+            ASSERT(fread(pixel, 1, bytes_per_pixel, stdin) == bytes_per_pixel, "Error: Could not read pixel: %s\n", strerror(errno))
+            ASSERT(fwrite(pixel, 1, bytes_per_pixel, output) == bytes_per_pixel, "Error: Could not write pixel: %s\n", strerror(errno)))
+        Fi(padding, ASSERT(fputc(0, output) != EOF, "Error: Could not write padding: %s\n", strerror(errno)))
     )
 }
