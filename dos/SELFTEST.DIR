@@ -1,0 +1,14 @@
+[[#0C!][I,]F#$]putstr;"Bitness: "putstr:!1 1[#0C>][1B<^1+^]F#$I;10I,
+"Allocating an array, got pointer: 0x"putstr:!256M<#I>10I,
+"Performing identity-fill..."putstr:!0 255 1[^#`#M,]F%10I,
+"Checking correctness..."putstr:!0 255 1[^#`#`^M.C!["Failed."putstr:!F`]?]F%10I,
+"Freeing the array"putstr:!M>10I,
+[[#0C!][I,]F#10I,]puts;
+"Test 1: General operations"puts:!
+2 2+'0+H0F B|#I;'=I,I,10I,
+"Test 2: Factorial"puts:!
+[1^1+1^1[*]F%I;]f;10f:!10I,
+"Test 3: Fibonacci"puts:!
+[#I;10I,]pf;[0pf:!1pf:!#3@1[$#`+pf:!]F%$$]fib;20fib:!
+"Test 4: Outer scope operations"puts:!
+[0a;[[1a~;]!]!a:["Ok"]["Failed"]F$]!puts:!
