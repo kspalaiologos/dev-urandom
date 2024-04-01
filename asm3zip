@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 [-e/-d] <input> <output>"
+    exit 1
+fi
+
+TEMP=$(mktemp)
+
+if [ "$1" == "-e" ]; then
+    cat $2 | tr -cd '[]<>+-.,' | perl -pe '1 while s!(<(?:(?1))*>)|(>(?:(?2))*<)|(\+(?:(?3))*-)|(-(?:(?4))*\+)|(\[-](?:([+\-]*\[-])|((\[(?:[^\[\]]++|(?8))*\]))))!if($1=~/^\[-\]/){"[-]"}else{""}!ge' | perl -pe 's/\[-\]/@/g' | awk '{for(i=1;i<=length($0);i++){c=substr($0,i,1);if(c!=p){if(p){if(n>1)printf"%d%s",n,p;else if(n==1)printf"%s",p}n=0;p=c}n++}if(n>1)printf"%d%s",n,p;else if(n==1)printf"%s",p}' > $TEMP
+    if [ "$(uname -m)" == "x86_64" ]; then
+        ./asm3zip-bin-x86_64 e $TEMP $3
+    else
+        ./asm3zip-bin-aarch64 d $TEMP $3
+    fi
+    rm $TEMP
+elif [ "$1" == "-d" ]; then
+    if [ "$(uname -m)" == "x86_64" ]; then
+        ./asm3zip-bin-x86_64 d $2 $TEMP
+    else
+        ./asm3zip-bin-aarch64 d $2 $TEMP
+    fi
+    cat $TEMP | awk '{for(i=1;i<=length($0);i++){c=substr($0,i,1);if(c~/[0-9]/){n=n*10+c}else{if(n==0)n=1;for(j=0;j<n;j++)printf"%s",c;n=0}}}' | perl -pe 's/@/[-]/g' > $3
+else
+    echo "Usage: $0 [-e/-d] <input> <output>"
+    exit 1
+fi

@@ -2,7 +2,7 @@
 CFLAGS=-O2 -g3
 
 PROGRAMS=nmsplit bmpextract histo bmpfunnel rgb24toycbcr rgb24toycocg \
-	     ycocgtorgb24 ycbcrtorgb24 fconstmod
+	     ycocgtorgb24 ycbcrtorgb24 fconstmod wavextract wavfunnel
 
 all: $(PROGRAMS)
 
