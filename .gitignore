@@ -6,3 +6,13 @@ histo
 bmpextract
 
 bmpfunnel
+
+fconstmod
+
+rgb24toycbcr
+
+rgb24toycocg
+
+ycbcrtorgb24
+
+ycocgtorgb24
