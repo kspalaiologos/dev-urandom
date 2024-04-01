@@ -22,7 +22,9 @@ elif [ "$1" == "-d" ]; then
         ./asm3zip-bin-aarch64 d $2 $TEMP
     fi
     cat $TEMP | awk '{for(i=1;i<=length($0);i++){c=substr($0,i,1);if(c~/[0-9]/){n=n*10+c}else{if(n==0)n=1;for(j=0;j<n;j++)printf"%s",c;n=0}}}' | perl -pe 's/@/[-]/g' > $3
+    rm $TEMP
 else
     echo "Usage: $0 [-e/-d] <input> <output>"
+    rm $TEMP
     exit 1
 fi
