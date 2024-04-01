@@ -1,7 +1,7 @@
 
 CFLAGS=-O2 -g3
 
-PROGRAMS=nmsplit bmpextract histo
+PROGRAMS=nmsplit bmpextract histo bmpfunnel
 
 all: $(PROGRAMS)
 
