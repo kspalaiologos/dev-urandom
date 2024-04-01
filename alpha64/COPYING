@@ -1,0 +1,16 @@
+
+Copyright (C) 2022 by Kamila Szewczyk, All rights reserved
+
+Additionally:
+libsais  - Copyright (C) 2021-2022 by Ilya Grebnov, Apache License 2.0
+lz4      - Copyright (C) 2011-2020 by Yann Collet, BSD 2-Clause License
+LuaJIT   - Copyright (C) 2005-2022 by Mike Pall, MIT License
+sol      - Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors, MIT License
+fpc      - Copyright (C) 2017, Konstantinos Agiannis, MIT License
+FSE      - Copyright (C) 2013 by Yann Collet, BSD 2-Clause License
+lzo2     - Copyright (C) Markus F.X.J. Oberhumer, GPLv2 License, source code in gpl/lzo2.tar.bz3
+
+Alpha64 can be redistributed and used free of charge. Copying, redistributing
+and sharing of the entire unmodified Alpha64 distribution is unconditionally 
+permitted.
+

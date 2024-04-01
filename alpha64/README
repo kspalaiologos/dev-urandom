@@ -1,0 +1,426 @@
+                             --==[[ ALPHA64 ]]==--
+
+--==>> Table of contents
+
+1. Presets
+1.1. Burrows-Wheeler transform
+1.2. Move-To-Front encoding
+1.3. Lz4 dictionary compression
+1.4. Adler32 checksum
+1.5. CRC32 checksum
+1.6. Sorted rank transform
+1.7. Context mixing 0
+1.8. Context mixing 1
+1.9. AES256
+1.10. SHA1
+1.11. Deflate
+1.12. lzma
+1.13. SWF
+1.14. RLE
+1.15. LZP
+1.16. Delta coding
+1.17. Histogram
+1.18. Prefix coding
+1.19. Huffman coding
+1.20. FSE
+1.21. Arithmetic coding
+1.22. XXHash
+1.23. E8E9
+1.24. LZO
+2. Lua preset API
+3. Coder API
+4. Supported platforms
+5. Command-line interface
+
+--==>> 1. Presets
+
+Alpha64 is a rather unorthodox compressor. Unlike other readily available
+compression software, Alpha64 relies on the user's discretion to tailor their
+own algorithm using elementary presets that perform a wide variety of data
+transformations that aim at aiding the forthcoming entropy coding steps.
+  Outside of the intrinsic presets, it is possible for the user to define
+their own data transformations using the Lua execution engine embedded in the
+compressor. As such, compressing various files that are otherwise withstand
+the best efforts of other compressors becomes attainable.
+
+==> 1.1. Burrows-Wheeler transform
+
+Preset string: bwt
+
+The Burrows-Wheeler transform generally improves the compressibility of data by
+rearranging a character string into runs of similar characters. Unsurprisingly,
+this transformation is reversible - without the need of storing additional data
+outside of the position of the first original character.
+  In Alpha64, the algorithm is implemented using a suffix array thus reaching
+linear time complexity and good performance on multicore systems, as it can
+take advantage of threading.
+
+==> 1.2. Move-To-Front transform
+
+Preset string: mtf=n
+
+The Move-To-Front transform takes advantage of local correlation of frequencies
+to reduce the entropy of a message, however, not all kinds of data exhibit
+these correlations, meaning that the transformation may result in increasing
+the entropy of the data packet.
+  In Alpha64, the algorithm does not improve the performance of the context
+mixing entropy coding algorithms and is generally not used alongside them.
+The compressor expects a value of alpha equal to 0, 0.5 or 1 specifying the
+subkind of transform. The value of 0 represents the proper Move-To-Front
+transform, while the value of 1 represents the Timestamp transform.
+
+==> 1.3. Lz4 dictionary compression
+
+Preset string: lz4=level
+
+The Lz4 compression algorithm utilises dictionary compression to decrease the
+size of the input data. Example usage: `lz4=12'.
+
+==> 1.4. Adler32 checksum
+
+Preset string: adler32
+
+Relatively fast (faster than CRC32) checksum algorithm for verifying the
+correctness of the decoded data.
+  In Alpha64, the Adler32 checksum pass (if present) usually opens the preset
+string. The implementation is relatively efficient and uses SSE2 vector
+extensions.
+
+==> 1.5. CRC32 checksum
+
+Preset string: crc32
+
+A slower alternative to the Adler32 checksum.
+
+==> 1.6. Sorted rank transform
+
+Preset string: srtrans
+
+Reduces the variance of the input data prior to entropy coding. Usually used
+before the Burrows-Wheeler transform.
+
+==> 1.7. Context mixing 0
+
+Preset string: cmix0
+
+A context mixer suited for encoding data encoded by the Burrows-Wheeler
+transform.
+
+==> 1.8. Context mixing 1
+
+Preset string: cmix1
+
+Good for text input (fixed low end learning rate in the mixers), requires a lot
+of memory (~>300MB).
+
+==> 1.9. AES256
+
+Preset string: aes256
+
+Encrypts the text with AES256. Uses they key as derived by HKDF@SHA3_256 from
+the password typed in by the user. The key must be re-entered during decryption.
+
+==> 1.10. SHA1 checksum
+
+Preset string: sha1
+
+A secure checksum algorithm.
+
+==> 1.11. Deflate
+
+Preset string: deflate
+
+An algorithm that uses a combination of LZ77 and Huffman coding. Commonly used
+to compress ZIP files.
+
+==> 1.12. lzma
+
+Preset string: lzma
+
+The default algorithm used by 7Zip.
+
+==> 1.13. SWF
+
+Preset string: swf
+
+Decompresses swf files during the compression pass (to make them more easily
+compressible by other algorithms) and recompresses them afterwards. Performs
+validity checks but does not check whether the SWF file re-compresses to the
+same file as before (it will most probably be not, but it should be
+functional). Does not work with blocking compression.
+
+==> 1.14. RLE
+
+Preset string: rle
+
+Performs run-length encoding using the Mespotine RLE algorithm.
+
+==> 1.15. LZP
+
+Preset string: lzp=dict_size:match_len
+
+Performs a Lempel-Ziv+Prediction pass. Uses the specified dict size and minimum match
+length. The effective dictionary size is 1 << dict_size. Example invocation:
+lzp=9:30
+
+==> 1.16. Delta coding
+
+Preset string: delta
+
+Performs a delta coding step (can be thought of as folding 2 byte wide windows with
+subtraction).
+
+==> 1.17. Histogram
+
+Preset string: histogram
+
+Display a histogram of the input data.
+
+==> 1.18. Prefix coding
+
+Preset string: fpc
+
+Performs a prefix coding step.
+
+==> 1.19. Huffman coding
+
+Preset string: huffman
+
+Performs a huffman coding step.
+
+==> 1.20. FSE
+
+Preset string: fse
+
+Performs a FSE entropy coding step.
+
+==> 1.21. Arithmetic coding
+
+Preset string: ac=predictor.lua
+
+Performs an arithmetic coding using the predictor specified. The predictor is
+expected to expose two API functions - `predictor' and `update'. The latter is
+called with a numeric argument signifying the bit that has just been encoded,
+while the former is called without arguments and is expected to provide a
+probability of a zero or one occuring. The result is expected to be in range
+<0, 4095> where 0 means that a zero bit is certainly going to follow, while
+4095 means that an one bit is certain to follow. Check the "Coder API" section
+for more.
+
+==> 1.22. XXHash
+
+Preset string: xxh
+
+Computes a XXH3 64-bit checksum and embeds it in file metadata to be checked
+while decompressing.
+
+==> 1.23. E8E9
+
+Preset string: e8e9
+
+An E8E9 filter that improves compressibility of x86 code. A CALL or JMP instruction (E8/E9)
+is usually followed by a 4 byte address relative to the program counter. Compression can be
+improved by converting it to an absolute address, because code often contains many calls or
+jumps to the same address. The transform consists of searching for a byte with the value E8
+or E9, interpreting the next 4 bytes as a 32 bit number, and adding the offset from the
+beginning of the input file. The transformation doesn't perform any disassembly, so it may
+slightly worsen compression for some pathological inputs.
+
+==> 1.24. LZO
+
+LZO compression using `<lzo/lzo1x.h>` & `lzo1x_1_compress`.
+
+--==>> 2. Lua preset API
+
+Lua presets are usually two standalone independent scripts that are meant to
+perform a custom encoding and decoding steps. For example, the following preset
+will "encrypt" the file with a very primitive xor cipher (key 42):
+
+---===>>> [[xor.lua]]
+transform(to_buffer(input_buffer), function(byte)
+    return bit.bxor(byte, 42)
+end)
+
+return input_buffer
+<<<===---
+
+The following functions are available to the Lua preset:
+- Everything from the `math', `bit32', `string' and `table' libraries
+- Additionally, the following functions from the base library:
+  * ipairs   * error     * assert   * next   * pairs   * pcall
+  * tonumber * tostring  * type     * xpcall
+
+~~ Buffer operations ~~:
+- `new_buffer(size: u64): buffer' - create a buffer with specified size.
+- `delete_buffer(b: buffer): void' - free a specified buffer.
+- `to_buffer_pair(b: buffer): buffer_pair' - construct a buffer pair from a
+  buffer (add a metadata block)
+- `to_buffer(b: buffer_pair): buffer' - extract the buffer data from a buffer
+  pair.
+
+~~ Metadata operations ~~:
+Note: The metadata block is recommended to /not/ exceed 200 bytes. Otherwise,
+the preset might break.
+- `metadata_push(bp: buffer_pair, value: u8):void' - push `value' to the back
+  of the metadata block of `bp'.
+- `metadata_poke(bp: buffer_pair, idx: u8, val: u8)' - set the metadata byte
+  at `idx' to `val' in `bp'.
+- `metadata_peek(bp: buffer_pair, idx: u8): u8' - read the value of the
+  metadata byte at `idx' in `bp'.
+- `metadata_len(bp: buffer_pair): u8' - get the length of the metadata block.
+
+Peeking and poking bytes in `bp' past `metadata_len(bp)' will throw an
+exception.
+
+~~ Manual encoders ~~:
+- `transform(input: buffer, output: buffer, transformer: function,
+    input_idx: u64, output_idx: u64, amount: u64): void' - transform a buffer
+  with function `transformer', starting from the `input_idx'-th byte of
+  `input', ending at the `input_idx + amount'-th byte of `input'. When the
+  transformer function returns a number, it's logged as the `output_idx'-th
+  byte, and `output_idx' is incremented. If the result is a table with numeric
+  keys, the values are written in order to the output buffer and `output_idx'
+  is incremented accordingly. Bounds checking is performed.
+
+- `transform(input: buffer, transformer: function, input_idx: u64,
+    amount: u64): void' - transform a buffer using a transformer function,
+    starting from `input_idx'-th byte of `input', ending at
+    `input_idx + amount'-th byte of `input'. The transformer function is
+    expected to return a number for each number taken.
+
+- `transform(input: buffer, transformer: function): void' - transform
+  the entire buffer using a given transformer function.
+
+~~ Manual buffer operations ~~:
+- `buffer_poke(dest: buffer, address: u64, value: u8): void` - write a byte
+  at specified index to `dest'. Bounds checked.
+- `buffer_peek(dest: buffer, address: u64): u8' - read a byte at specified
+  index from `dest'. Bounds checked.
+- `buffer_len(b: buffer): u64' - return the length of a buffer.
+
+~~ Preset operations ~~:
+Each of the following presets has its own encode/decode function:
+- lz4    - srtrans - crc32      - adler32  - cmix0   - deflate
+- cmix1  - bwt     - mtf        - aes256   - sha1    - huffman
+- fpc    - fse     - e8e9       - lzo
+
+For example:
+- `encode_bwt(b: buffer_pair): void' - encodes the buffer pair, writes
+  relevant metadata required for decoding, might free or overwrite the old
+  underlying buffer and replace it with the new one containing encoded data.
+- `encode_bwt(b: buffer_pair, idx: u64): void' - encodes the buffer pair,
+  starting with the `idx'-th byte in the buffer. Does not free anything, the
+  old buffer must be freed accordingly.
+- `encode_bwt(b: buffer_pair, idx: u64, len: u64): void' - encodes the buffer
+  pair, starting with the `idx'-th byte in the buffer and ending on the
+  `idx+len'-th one. Does not free anything, the old buffer must be freed
+  accordingly.
+- `decode_bwt(b: buffer_pair, meta_offset: u64): void' - decode the buffer
+  pair, reads relevant metadata from the buffer pair starting with offset
+  given by `metadata_offset'. 
+- `decode_bwt(b: buffer_pair, meta_offset: u64, offset: u64): void' - decode
+  the buffer pair, reads relevant metadata from the buffer pair starting with
+  offset given by `metadata_offset'. The decoding starts  with the `offset'-th
+  byte of the buffer. Does not free anything, the old buffer must be freed
+  accordingly.
+- `decode_bwt(b: buffer_pair, meta_offset: u64, offset: u64, len: u64): void'
+  decodes the buffer pair, reads relevant metadata from the buffer pair
+  starting with offset given by `metadata_offset'. The decoding starts with the
+  `offset'-th byte of the buffer and ends at the `offset+len'-th byte. Does not
+  free anything, the old buffer must be freed accordingly.
+
+Note: The `mtf' function also takes a special (last) argument in the encoding
+      phase that specifies the alpha coefficient value. This also applies for
+      lz4, lzp, etc...
+
+Note: The `aes256' takes a special (last) argument in both phases that
+      specifies the password.  
+
+~~ Global variables ~~:
+- `input_buffer' - the buffer pair containing the input data. Should _not_ be
+  freed.
+
+~~ Others ~~:
+- `query_password' - query a password string from the user.
+- `abort(msg)' - mark the preset application as unsuccessful and silently quit.
+- `is_solid' - a boolean variable set to true if the compression is solid
+  (block size is not fixed).
+
+Lua API examples can be found in the `examples/' directory. The command-line
+interface for encoding follows:
+
+---===>>>
+# PRESET=adler32,lua=examples/xor.lua:examples/xor.lua
+
+ 0 [23:01] ~/Desktop/Alpha@mistress % ./alpha64 -V -c -p $PRESET in.c in.z
+1/2 ... 1us
+2/2 ... 1ms 60us
+1010B  -> 1KB 128B // 114% in 1ms 199us
+ 0 [23:01] ~/Desktop/Alpha@mistress % ./alpha64 -V -d in.z in2.c
+1/2 ... 1ms 232us
+2/2 ...
+1KB 128B  -> 1010B // 114% in 1ms 377us
+<<<===---
+
+The high execution time (1ms) is related to the JIT compilation step and makes
+no difference on more advanced script examples.
+
+--==>> 3. Coder API
+
+~~ Defaults ~~:
+- `abort` - abort the preset.
+- `trace(message: string)` - print a string to the standard output.
+
+~~ APM (Logistic; using sigmoid functions) ~~:
+- `local apm = APM:new(size: uint)` - create a new APM with N contexts using 66*N bytes
+  of memory.
+- `apm:refine(pr0: uint<0, 4095>, ctx: <0, size-1>, rate = 7)` - adjust probability in
+  context ctx (0 to size-1). Optionally, `rate` determines the learning rate (smaller
+  is faster).
+
+~~ LAPM (linear; without using sigmoid functions) ~~:
+- `local lapm = LAPM:new(size: uint)` - create a new linear APM with N contexts using
+  260*N bytes of memory.
+- `lapm:refine(pr0: uint<0, 4095>, ctx: <0, size-1>, rate = 7)` - adjust probability in
+  context ctx (0 to size-1). Optionally, `rate` determines the learning rate (smaller
+  is faster).
+
+~~ FAPM (fast; without using sigmoid functions) ~~:
+- `local fapm = FAPM:new(size: uint)` - create a new fast APM with N contexts using
+  32*N bytes of memory.
+- `fapm:refine(pr0: uint<0, 4095>, ctx: <0, size-1>, rate = 7)` - adjust probability in
+  context ctx (0 to size-1). Optionally, `rate` determines the learning rate (smaller
+  is faster).
+
+--==>> 4. Supported platforms
+
+alpha64_x86_64 will run on machines that support at least AVX2 (Haswell+).
+alpha64_aarch64 will run on ARM64 machines.
+
+Every operating system that supports the binary interface of the Linux kernel
+will run Alpha64 - Linux itself, WSL (even the early syscall translation
+versions), etc...
+
+Native Windows builds are planned.
+
+--==>> 5. Command-line interface
+
+./alpha64 <arguments> [input] [output]
+
+If [output] is omitted, [input] is compressed and the binary data is written to
+`stdout'. If [input] is also omitted, it is read from `stdin' and written to
+`stdout', but requires the `-b=N` flag to be set.
+
+Files are compressed as a whole unless chunking is enabled, in which case
+Alpha64 compresses files in fragments. This can be enabled using the `-b` flag,
+for example `-b=16M` for 16 MiB blocks or `-b=512K` for 512 KiB blocks.
+
+Verbose mode (`-V`) makes Alpha64 print compression statistics during and after
+the process.
+
+Compression is enabled using the `-c` flag, while decompression is enabled
+using `-d`. Either of these flags must be supplied.
+
+Preset required for the compression is specified using the `-p' flag and
+consists of the compression "building blocks" separated by commas. For example:
+`./alpha64 -V -c -p adler32,bwt,cmix0 input.bin output.z`
