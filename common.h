@@ -11,10 +11,10 @@
 #include <errno.h>
 
 #define _(a...) {return({a;});}
-#define Fi(n,a...) for(int i=0;i<n;i++){a;}
-#define Fj(n,a...) for(int j=0;j<n;j++){a;}
-#define Fx(n,a...) for(int x=0;x<n;x++){a;}
-#define Fy(n,a...) for(int y=0;y<n;y++){a;}
+#define Fi(n,a...) for(i64 i=0;i<n;i++){a;}
+#define Fj(n,a...) for(i64 j=0;j<n;j++){a;}
+#define Fx(n,a...) for(i64 x=0;x<n;x++){a;}
+#define Fy(n,a...) for(i64 y=0;y<n;y++){a;}
 #define ASSERT(a,m...) if(!(a)){fprintf(stderr,m);exit(1);}
 
 typedef uint8_t u8;

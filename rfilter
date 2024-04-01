@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+# Filter the lines of standard input out that do/do not match a given pattern.
+use strict;
+use warnings;
+if (@ARGV < 1) {
+    print "Usage: rfilter [-n] pattern\n";
+    exit 1;
+}
+my $negate = 0;
+if ($ARGV[0] eq "-n") {
+    $negate = 1;
+    shift @ARGV;
+}
+my $pattern = shift @ARGV;
+while (<>) {
+    print if $negate xor /$pattern/;
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+# Filter the lines of standard input to standard output using a Perl expression.
+use strict;
+use warnings;
+if (@ARGV < 1) {
+    print "Usage: pfilter pattern\n";
+    exit 1;
+}
+my $pattern = shift @ARGV;
+while (<STDIN>) {
+    print if eval $pattern;
+}
+# Example use: rmap 'm/^\d+$/' < input.txt

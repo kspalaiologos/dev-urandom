@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+# Map the lines through a regex with replacement to generate a new table.
+# rmap '([a-z]+)' 'uc($1)' 'ge' < table.txt
+use strict;
+use warnings;
+if(@ARGV < 3) {
+    print "Map the lines through a regex with replacement to generate a new stream.\n";
+    print "Usage: rmap 'regex' 'replacement' ['flags']\n";
+    exit 1;
+}
+my $regex = shift;
+my $replacement = shift;
+my $flags = shift;
+while(<>) {
+    eval "s/$regex/$replacement/$flags";
+    print;
+}
