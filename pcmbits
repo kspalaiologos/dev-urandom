@@ -1,0 +1,12 @@
+#!/bin/bash
+# pcmbits <N> <M> in out
+# Turn N-bit PCM audio to M-bit PCM audio
+
+if [ $# -ne 4 ]; then
+    echo "Usage: $0 <N> <M> inN.pcm outM.pcm"
+    echo "E.g. N=s32, M=u16"
+    exit 1
+fi
+
+sox -t $1 --endian little $3 -t $2 $4
+
