@@ -1,0 +1,31 @@
+#!/bin/bash
+# mkfatfloppy - Make a FAT HD floppy image with a specified bootsector.
+# mkfatfloppy floppy.img dir
+
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 image.img dir"
+    exit 1
+fi
+
+image=$1
+dir=$2
+
+if [ -e $image ]; then
+    echo "Error: $image already exists."
+    exit 1
+fi
+
+if [ ! -d $dir ]; then
+    mkfs.msdos -C $image 1440
+    mcopy -s -i $image -p $file ::$file
+    mdir -i ../image.img ::
+    exit 0
+else
+    mkfs.msdos -C $image 1440
+    for file in $(ls $dir); do
+        mcopy -s -i $image -p $dir/$file ::$file
+    done
+    mdir -i ../image.img ::
+    exit 0
+fi
+
