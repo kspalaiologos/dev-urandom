@@ -9,3 +9,5 @@ Issues/pull requests unwelcome, this is a personal repository. If something does
 The rest of programs are used as a partial product in making other software (e.g. DOS32A) and put here merely for convenience.
 
 Most of this was written primarily out of frustration. Extracting the data from or funneling data to a bitmap file should be obvious. Splitting a file into n chunks of m bytes should have been obvious. Turns out that it's not, and I end up rewriting these programs a hundred times, so this repository houses whatever I needed over time. Most of this was written in half an hour and is trivial to improve.
+
+A lot of this code is experimental in that it implements an idea that I had at the time, but never found myself improving it further.
