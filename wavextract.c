@@ -23,6 +23,7 @@ int main(int argc, char * argv[]) {
     Fi(data_size,
         u8 sample;
         ASSERT(fread(&sample, 1, 1, input) == 1, "Error: Could not read sample\n");
+        if (bits_per_sample == 8) sample ^= 0x80;
         ASSERT(fwrite(&sample, 1, 1, stdout) == 1, "Error: Could not write sample\n"));
 }
 

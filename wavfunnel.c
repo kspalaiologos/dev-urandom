@@ -1,10 +1,10 @@
-// Extract the data from .WAV files to a .RAW file.
+// Turn a .RAW file (signed) to a .WAV file
 // E.g. wavfunnel FALL3new.wav 16 44100 2 $(wc -c<FALL3.dat) < FALL3.dat
 
 #include <common.h>
 
 int main(int argc, char * argv[]) {
-    ASSERT(argc == 6, "Usage: %s <output> <bits_per_sample> <sample_rate> <channels> <input_size>\n", argv[0]);
+    ASSERT(argc == 6, "Usage: %s <output> <bits_per_sample> <sample_rate> <channels> <input_size> < input\n", argv[0]);
     FILE * output = fopen(argv[1], "wb");
     ASSERT(output != NULL, "Error: Could not open file %s: %s\n", argv[1], strerror(errno));
     u16 bits_per_sample = atoi(argv[2]);
@@ -33,6 +33,7 @@ int main(int argc, char * argv[]) {
     fwrite(header, 1, 44, output);
     u8 sample[4]; Fi(data_size / bytes_per_sample,
         ASSERT(fread(sample, 1, bytes_per_sample, stdin) == bytes_per_sample, "Error: Could not read sample: %s\n", strerror(errno))
+        if (bits_per_sample == 8) sample[0] ^= 0x80;
         ASSERT(fwrite(sample, 1, bytes_per_sample, output) == bytes_per_sample, "Error: Could not write sample: %s\n", strerror(errno))
     )
 }
