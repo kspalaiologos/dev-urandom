@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 char d[2000]={' '};int s[1<<9],x,y,dx=1,dy,S,p,a,b,c;
 #define C d[y*80+x]
 #define P (p?s[--p]:0)
