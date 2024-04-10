@@ -1,0 +1,13 @@
+#!/usr/bin/awk -f
+
+BEGIN {
+  n["rwx"]=7; n["rw-"]=6; n["r-x"]=5; n["r--"]=4; n["-wx"]=3; n["-w-"]=2; n["--x"]=1; n["---"]=0;
+}
+
+{
+  mode = 0;
+  mode += n[substr($1, 2, 3)] * (2^6);  # Owner
+  mode += n[substr($1, 5, 3)] * (2^3);  # Group
+  mode += n[substr($1, 8, 3)];          # Others
+  printf("0%o\n", mode);
+}
