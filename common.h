@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 #include <errno.h>
 
 #define _(a...) {return({a;});}
