@@ -9,7 +9,7 @@ PROGRAMS=nmsplit bmpextract histo bmpfunnel rgb24toycbcr rgb24toycocg \
 
 EXTRAPROGS=alpha64/alpha64-x86_64 asm3zip asm3zip-bin-x86_64 fastent gdbnow \
 		   gen-ptab ls2mode mkfatfloppy mtx86 npack pcmbits pfilter rfilter rmap \
-		   uniqc xor256x86
+		   uniqc xor256x86 mkasm
 
 all: $(PROGRAMS)
 

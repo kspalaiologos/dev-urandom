@@ -1,0 +1,16 @@
+#!/bin/bash
+TMPFILE=$(mktemp)
+trap "rm -f $TMPFILE $TMPFILE.o" EXIT
+cat > $TMPFILE
+nasm -f bin $TMPFILE -o $TMPFILE.o
+if [ $? -ne 0 ]; then
+    echo "Error assembling"
+    exit 1
+fi
+echo "Shellcode size: $(wc -c $TMPFILE.o | cut -d ' ' -f 1) bytes"
+echo "Shellcode visualisation: "
+xxd $TMPFILE.o
+echo "Shellcode (raw bytes): "
+xxd -p $TMPFILE.o
+echo "Shellcode (C): "
+xxd -i $TMPFILE.o
