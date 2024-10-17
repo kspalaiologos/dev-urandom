@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -79,6 +80,11 @@ void thread_func(void *arg) {
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, remote_sockfd, &ev) == -1) {
     perror("epoll_ctl: remote_sockfd"); goto err;
   }
+  int pipefd[2];
+  if (pipe(pipefd) == -1) {
+    perror("pipe");
+    goto err;
+  }
   for (;;) {
     int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
     if (nfds == -1) {
@@ -88,15 +94,37 @@ void thread_func(void *arg) {
     for (int i = 0; i < nfds; i++) {
       int sockfd = events[i].data.fd;
       if (events[i].events & EPOLLIN) {
-        n = recv(sockfd, buf, sizeof(buf), 0);
-        if (n == -1) { perror("recv"); break; }
-        if (n == 0) goto err;
-        int dest_sockfd = (sockfd == client_sockfd) ? remote_sockfd : client_sockfd, ret;
-        for (sent = 0; sent < n; sent += ret) {
-          if ((ret = send(dest_sockfd, buf + sent, n - sent, 0)) == -1) {
-            if (errno != EAGAIN & errno != EWOULDBLOCK)
-              perror("send");
-            break;
+        int src_sockfd = events[i].data.fd;
+        int dest_sockfd = (src_sockfd == client_sockfd) ? remote_sockfd : client_sockfd;
+        while (1) {
+          // First splice: move data from the source socket to the pipe
+          int n = splice(src_sockfd, NULL, pipefd[1], NULL, 4096, SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
+          if (n == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+              break;  // Return to epoll_wait
+            } else {
+              perror("splice to pipe");
+              close(pipefd[0]);
+              close(pipefd[1]);
+              goto err;
+            }
+          } else if (n == 0) {
+            // Connection closed
+            close(pipefd[0]);
+            close(pipefd[1]);
+            goto err;
+          }
+          // Second splice: move data from the pipe to the destination socket
+          int ret = splice(pipefd[0], NULL, dest_sockfd, NULL, n, SPLICE_F_MOVE | SPLICE_F_NONBLOCK);
+          if (ret == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+              break;  // Return to epoll_wait
+            } else {
+              perror("splice to socket");
+              close(pipefd[0]);
+              close(pipefd[1]);
+              goto err;
+            }
           }
         }
       }
